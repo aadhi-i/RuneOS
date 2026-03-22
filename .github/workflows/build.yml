@@ -47,8 +47,6 @@ jobs:
             --mirror-binary http://ports.ubuntu.com/ubuntu-ports/ \
             --bootstrap-qemu-arch arm64 \
             --bootstrap-qemu-static /usr/bin/qemu-aarch64-static \
-            --updates false \
-            --security false \
             --apt-options "--yes -o Acquire::Retries=3"
 
       - name: Build Rune OS ISO

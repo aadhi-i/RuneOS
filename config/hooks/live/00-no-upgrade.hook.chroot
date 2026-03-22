@@ -1,0 +1,3 @@
+#!/bin/bash
+# Skip upgrade to save time
+exit 0
