@@ -53,13 +53,12 @@ jobs:
         run: |
           sudo lb build 2>&1 | tee build.log
 
-      - name: Find and rename ISO
+      - name: Rename ISO
         run: |
-          find . -name "*.iso" -type f
-          mv binary.hybrid.iso rune-os-1.0-arm64.iso 2>/dev/null || \
-          find . -name "*.iso" -exec mv {} rune-os-1.0-arm64.iso \; 2>/dev/null || \
-          echo "No ISO found"
-          ls -lh *.iso 2>/dev/null
+          sudo mv binary.hybrid.iso rune-os-1.0-arm64.iso 2>/dev/null || \
+          sudo mv live-image-arm64.hybrid.iso rune-os-1.0-arm64.iso 2>/dev/null || \
+          sudo ls -lh *.iso 2>/dev/null || echo "Checking for ISO..."
+          sudo ls -lh *.iso 2>/dev/null
           df -h
 
       - name: Upload ISO
