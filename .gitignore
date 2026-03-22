@@ -1,0 +1,6 @@
+chroot/
+binary/
+cache/
+*.iso
+*.log
+.build/

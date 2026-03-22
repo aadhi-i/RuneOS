@@ -1,0 +1,19 @@
+#!/bin/bash
+set -e
+export DEBIAN_FRONTEND=noninteractive
+
+# Remove heavy unnecessary packages
+apt-get remove -y --purge \
+  linux-firmware \
+  memtest86+ \
+  wireless-regdb \
+  2>/dev/null || true
+
+apt-get autoremove -y
+apt-get clean
+rm -rf /var/lib/apt/lists/*
+rm -rf /usr/share/doc/*
+rm -rf /usr/share/man/*
+rm -rf /usr/share/locale/*
+rm -rf /var/cache/apt/*
+echo "✓ Bloat removed"

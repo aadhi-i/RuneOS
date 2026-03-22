@@ -1,0 +1,181 @@
+#!/bin/bash
+set -e
+cat > /usr/local/bin/rune << 'RUNEEOF'
+#!/bin/bash
+VERSION="1.0.0"
+PURPLE='\033[38;5;141m'
+CYAN='\033[38;5;111m'
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+GRAY='\033[38;5;245m'
+NC='\033[0m'
+BOLD='\033[1m'
+MODEL="llama3.2:1b"
+
+header() {
+    echo -e "${BOLD}${PURPLE}ᚱ  Rune OS${NC} ${CYAN}v${VERSION}${NC}"
+    echo -e "${CYAN}────────────────────────────${NC}"
+}
+
+check_ai() {
+    if ! command -v ollama &>/dev/null; then
+        echo -e "${RED}AI tools not installed.${NC}"
+        echo -e "Run: ${BOLD}rune bundle install ai-tools${NC}"
+        exit 1
+    fi
+    if ! systemctl is-active --quiet ollama; then
+        echo -e "${GRAY}Starting AI engine...${NC}"
+        systemctl start ollama
+        sleep 2
+    fi
+}
+
+ai_query() {
+    local prompt="$1"
+    local system="$2"
+    check_ai
+    echo -ne "${PURPLE}ᚱ  ${NC}"
+    ollama run "$MODEL" --system "$system" "$prompt" 2>/dev/null
+}
+
+case "$1" in
+    install)  header; sudo apt-get install -y "${@:2}" ;;
+    remove)   header; sudo apt-get remove -y "${@:2}" ;;
+    update)   header; sudo apt-get update && sudo apt-get upgrade -y ;;
+    search)   apt-cache search "${@:2}" ;;
+    info)     apt-cache show "${@:2}" ;;
+    clean)    header; sudo apt-get autoremove -y && sudo apt-get clean ;;
+    bundles)
+        header
+        echo -e "  ${CYAN}web${NC}        Node, Python, PHP, Nginx"
+        echo -e "  ${CYAN}systems${NC}    gcc, clang, cmake, gdb"
+        echo -e "  ${CYAN}java${NC}       OpenJDK 21, Maven, Gradle"
+        echo -e "  ${CYAN}databases${NC}  MySQL + MongoDB"
+        echo -e "  ${CYAN}ai-ml${NC}      PyTorch, Jupyter, NumPy"
+        echo -e "  ${CYAN}devops${NC}     Docker, Ansible, kubectl"
+        echo -e "  ${CYAN}rust-go${NC}    Rust, Go toolchain"
+        echo -e "  ${CYAN}ai-tools${NC}   Ollama + Llama 3.2 (offline)"
+        echo ""
+        echo -e "Usage: ${BOLD}rune bundle install <name>${NC}"
+        ;;
+    bundle)
+        if [[ "$2" == "install" ]]; then
+            header
+            case "$3" in
+                web)      sudo apt-get install -y nodejs npm python3 python3-pip nginx php php-cli php-fpm composer ;;
+                systems)  sudo apt-get install -y gcc g++ clang cmake make gdb valgrind ;;
+                java)     sudo apt-get install -y openjdk-21-jdk maven gradle ;;
+                databases)
+                    sudo apt-get install -y mysql-server mysql-client
+                    curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc | gpg --dearmor -o /usr/share/keyrings/mongodb.gpg
+                    echo "deb [ arch=arm64 signed-by=/usr/share/keyrings/mongodb.gpg ] https://repo.mongodb.org/apt/ubuntu noble/mongodb-org/7.0 multiverse" > /etc/apt/sources.list.d/mongodb.list
+                    sudo apt-get update -qq && sudo apt-get install -y mongodb-org
+                    ;;
+                ai-ml)    sudo apt-get install -y python3-pip jupyter-core python3-numpy python3-pandas python3-matplotlib ;;
+                devops)   sudo apt-get install -y docker.io docker-compose ansible ;;
+                rust-go)  sudo apt-get install -y golang-go && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y ;;
+                ai-tools) curl -fsSL https://ollama.com/install.sh | sh && systemctl enable ollama && ollama pull llama3.2:1b ;;
+                *)        echo -e "${RED}Unknown bundle: $3${NC}" ;;
+            esac
+            echo -e "\n${GREEN}✓ Bundle '$3' installed${NC}"
+        fi
+        ;;
+    ai)
+        if [[ -z "$2" ]]; then
+            header
+            echo -e "Usage: ${BOLD}rune ai \"question\"${NC}"
+            echo -e "       ${BOLD}rune ai chat${NC}"
+        elif [[ "$2" == "chat" ]]; then
+            header
+            check_ai
+            SYSTEM="You are Rune, an AI assistant in Rune OS terminal. Be concise and practical."
+            while true; do
+                echo -ne "${PURPLE}you${NC} > "
+                read -r input
+                [[ "$input" == "exit" ]] && break
+                echo -ne "\n${PURPLE}ᚱ${NC}  "
+                ollama run "$MODEL" --system "$SYSTEM" "$input" 2>/dev/null
+                echo ""
+            done
+        else
+            QUESTION="${@:2}"
+            SYSTEM="You are Rune, a developer AI assistant. Answer concisely. Give working code examples."
+            echo ""
+            ai_query "$QUESTION" "$SYSTEM"
+            echo ""
+        fi
+        ;;
+    explain)
+        TARGET="${@:2}"
+        if [[ -f "$TARGET" ]]; then
+            PROMPT="Explain what this file does:\n\n$(cat $TARGET)"
+        else
+            PROMPT="Explain what this command does: $TARGET"
+        fi
+        echo ""
+        ai_query "$PROMPT" "Explain code and commands clearly and concisely."
+        echo ""
+        ;;
+    commit)
+        DIFF=$(git diff --cached 2>/dev/null)
+        [[ -z "$DIFF" ]] && DIFF=$(git diff 2>/dev/null)
+        [[ -z "$DIFF" ]] && { echo -e "${RED}No changes found.${NC}"; exit 1; }
+        echo -e "${GRAY}Generating commit message...${NC}"
+        MSG=$(ollama run "$MODEL" --system "Write a conventional commit message. One line, max 72 chars. No explanation." "$DIFF" 2>/dev/null | head -1)
+        echo -e "\n${CYAN}Suggested:${NC} $MSG"
+        echo -ne "\nUse this? (y/n/edit) "
+        read -r answer
+        case "$answer" in
+            y|Y) git commit -m "$MSG" ;;
+            e|edit) echo -ne "Edit: "; read -r custom; git commit -m "$custom" ;;
+            *) echo "Cancelled." ;;
+        esac
+        ;;
+    why)
+        [[ -z "$2" ]] && { echo -e "Usage: ${BOLD}rune why \"error\"${NC}"; exit 1; }
+        echo ""
+        ai_query "${@:2}" "Explain this Linux error in 2 sentences and give one fix."
+        echo ""
+        ;;
+    help|"")
+        header
+        echo -e "Usage: ${BOLD}rune${NC} <command>\n"
+        echo -e "${BOLD}Packages${NC}"
+        echo -e "  ${CYAN}install${NC}   <pkg>          Install a package"
+        echo -e "  ${CYAN}remove${NC}    <pkg>          Remove a package"
+        echo -e "  ${CYAN}update${NC}                   Update all packages"
+        echo -e "  ${CYAN}search${NC}    <query>        Search packages"
+        echo -e "  ${CYAN}bundle${NC}    install <name> Install a dev bundle"
+        echo -e "  ${CYAN}bundles${NC}                  List all bundles"
+        echo -e "  ${CYAN}clean${NC}                    Free up disk space"
+        echo ""
+        echo -e "${BOLD}AI (needs ai-tools bundle)${NC}"
+        echo -e "  ${CYAN}ai${NC}        \"question\"     Ask the AI anything"
+        echo -e "  ${CYAN}ai${NC}        chat           Interactive AI chat"
+        echo -e "  ${CYAN}explain${NC}   <file/cmd>     Explain code or commands"
+        echo -e "  ${CYAN}commit${NC}                   AI git commit message"
+        echo -e "  ${CYAN}why${NC}       \"error\"        Explain an error"
+        echo ""
+        ;;
+    *)
+        echo -e "${RED}Unknown command: $1${NC}. Run ${BOLD}rune help${NC}"
+        exit 1
+        ;;
+esac
+RUNEEOF
+chmod +x /usr/local/bin/rune
+
+# Smart error explainer
+cat >> /etc/bash.bashrc << 'ERREOF'
+rune_error_trap() {
+    local exit_code=$?
+    local cmd=$(history 1 | sed 's/^[ ]*[0-9]*[ ]*//')
+    if [[ $exit_code -ne 0 ]] && command -v ollama &>/dev/null; then
+        echo -e "\n\033[38;5;141mᚱ  What went wrong:\033[0m"
+        ollama run llama3.2:1b --system "Explain this error in 2 sentences and give one fix." "Command: $cmd failed" 2>/dev/null
+        echo ""
+    fi
+}
+trap 'rune_error_trap' ERR
+ERREOF
+echo "✓ rune CLI done"

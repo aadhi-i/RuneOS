@@ -1,0 +1,5 @@
+[Desktop Entry]
+Name=Rune Installer
+Exec=python3 /opt/rune-installer/installer.py
+Type=Application
+X-GNOME-Autostart-enabled=true

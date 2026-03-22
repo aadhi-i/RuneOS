@@ -1,0 +1,56 @@
+#!/bin/bash
+set -e
+
+# OS identity
+cat > /etc/os-release << 'OSEOF'
+PRETTY_NAME="Rune OS 1.0 Iron"
+NAME="Rune OS"
+VERSION_ID="1.0"
+VERSION="1.0 (Iron)"
+ID=rune
+ID_LIKE=ubuntu
+HOME_URL="https://runeos.dev"
+VERSION_CODENAME=iron
+UBUNTU_CODENAME=noble
+OSEOF
+
+echo "runeos" > /etc/hostname
+
+# Bash prompt
+cat >> /etc/bash.bashrc << 'BASHEOF'
+RESET='\[\033[0m\]'
+BOLD='\[\033[1m\]'
+BLUE='\[\033[38;5;111m\]'
+PURPLE='\[\033[38;5;141m\]'
+GRAY='\[\033[38;5;245m\]'
+export PS1="${BOLD}${PURPLE}rune${GRAY}:${BLUE}\w${RESET} \$ "
+alias ls='ls --color=auto -F'
+alias ll='ls -lah --color=auto'
+alias ..='cd ..'
+alias cls='clear'
+BASHEOF
+
+# Welcome message
+cat > /etc/rune-welcome << 'WELEOF'
+#!/bin/bash
+PURPLE='\033[38;5;141m'
+CYAN='\033[38;5;111m'
+GRAY='\033[38;5;245m'
+NC='\033[0m'
+BOLD='\033[1m'
+echo ""
+echo -e "  ${BOLD}${PURPLE}ᚱ  Rune OS 1.0 Iron${NC}  ${GRAY}ARM64${NC}"
+echo -e "  ${GRAY}────────────────────────────────${NC}"
+echo -e "  ${CYAN}kernel${NC}  $(uname -r)"
+echo -e "  ${CYAN}uptime${NC}  $(uptime -p | sed 's/up //')"
+echo -e "  ${CYAN}memory${NC}  $(free -h | awk '/^Mem/{print $3 " / " $2}')"
+echo ""
+echo -e "  ${GRAY}Super+Space${NC} launcher  ${GRAY}Super+Enter${NC} terminal"
+echo -e "  ${GRAY}Super+B${NC}     browser   ${GRAY}Super+C${NC}     vscode"
+echo -e "  ${GRAY}rune help${NC}   package manager"
+echo ""
+WELEOF
+chmod +x /etc/rune-welcome
+echo 'source /etc/rune-welcome' >> /etc/bash.bashrc
+
+echo "✓ Branding done"

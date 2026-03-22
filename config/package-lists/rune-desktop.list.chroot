@@ -1,0 +1,48 @@
+# Base system
+bash
+bash-completion
+curl
+wget
+git
+openssh-server
+sudo
+ca-certificates
+network-manager
+nano
+btop
+fzf
+ripgrep
+
+# KDE minimal
+plasma-desktop
+plasma-nm
+plasma-pa
+kwin-x11
+dolphin
+konsole
+sddm
+breeze
+breeze-cursor-theme
+
+# Fonts (minimal)
+fonts-noto
+fonts-noto-mono
+
+# Icons
+papirus-icon-theme
+
+# Apps
+firefox
+libreoffice-writer
+libreoffice-calc
+libreoffice-impress
+libreoffice-gtk3
+thunar
+alacritty
+
+# Python + installer
+python3
+python3-pip
+python3-gi
+gir1.2-gtk-4.0
+libadwaita-1-0

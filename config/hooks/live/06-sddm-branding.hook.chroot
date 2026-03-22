@@ -1,0 +1,76 @@
+#!/bin/bash
+set -e
+
+mkdir -p /usr/share/sddm/themes/rune
+cat > /usr/share/sddm/themes/rune/theme.conf << 'THEMEEOF'
+[General]
+background=/usr/share/backgrounds/rune-wallpaper.png
+basicTextColor=#cdd6f4
+blurRadius=0
+buttonTextColor=#cdd6f4
+fontPointSize=12
+headerTextColor=#cba6f7
+overrideLoginButtonTextColor=#cdd6f4
+THEMEEOF
+
+cat > /usr/share/sddm/themes/rune/Main.qml << 'QMLEOF'
+import QtQuick 2.0
+import SddmComponents 2.0
+
+Rectangle {
+    color: "#0e0e12"
+    width: 1920
+    height: 1080
+
+    Text {
+        anchors.centerIn: parent
+        anchors.verticalCenterOffset: -80
+        text: "ᚱ  Rune OS"
+        color: "#cba6f7"
+        font.pointSize: 36
+        font.bold: true
+    }
+
+    Text {
+        anchors.centerIn: parent
+        anchors.verticalCenterOffset: -30
+        text: "1.0 Iron · ARM64"
+        color: "#6c7086"
+        font.pointSize: 14
+    }
+
+    TextInput {
+        id: userInput
+        anchors.centerIn: parent
+        anchors.verticalCenterOffset: 40
+        width: 300
+        height: 40
+        color: "#cdd6f4"
+        horizontalAlignment: TextInput.AlignHCenter
+        font.pointSize: 14
+        placeholderText: "Username"
+    }
+
+    TextInput {
+        id: passInput
+        anchors.centerIn: parent
+        anchors.verticalCenterOffset: 100
+        width: 300
+        height: 40
+        color: "#cdd6f4"
+        echoMode: TextInput.Password
+        horizontalAlignment: TextInput.AlignHCenter
+        font.pointSize: 14
+        placeholderText: "Password"
+    }
+}
+QMLEOF
+
+# Set rune as SDDM theme
+cat > /etc/sddm.conf.d/rune.conf << 'SDDMEOF'
+[Theme]
+Current=rune
+CursorTheme=Breeze
+SDDMEOF
+
+echo "✓ SDDM Rune branding done"

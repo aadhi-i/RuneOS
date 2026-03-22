@@ -1,0 +1,64 @@
+#!/bin/bash
+set -e
+
+apt-get install -y python3-pil plymouth plymouth-themes 2>/dev/null || true
+
+# Generate wallpaper
+python3 << 'PYEOF'
+from PIL import Image, ImageDraw
+img = Image.new('RGB', (1920, 1080), color='#0e0e12')
+draw = ImageDraw.Draw(img)
+for i in range(0, 1920, 120):
+    for j in range(0, 1080, 120):
+        draw.line([(i, j), (i+60, j+60)], fill='#1a1a22', width=1)
+        draw.line([(i+60, j), (i, j+60)], fill='#1a1a22', width=1)
+img.save('/usr/share/backgrounds/rune-wallpaper.png')
+print('✓ Wallpaper generated')
+PYEOF
+
+# Set as KDE wallpaper
+mkdir -p /etc/skel/.local/share/plasma/look-and-feel/org.kde.breezedark.desktop/contents/defaults
+cat > /etc/skel/.config/plasma-org.kde.plasma.desktop-appletsrc << 'PLASMAEOF'
+[Containments][1][Wallpaper][org.kde.image][General]
+Image=file:///usr/share/backgrounds/rune-wallpaper.png
+PLASMAEOF
+
+# Plymouth theme
+mkdir -p /usr/share/plymouth/themes/rune
+cat > /usr/share/plymouth/themes/rune/rune.script << 'PLYMOUTHEOF'
+screen_width = Window.GetWidth();
+screen_height = Window.GetHeight();
+background = Rectangle();
+background.SetColor(0.055, 0.055, 0.071, 1);
+background.SetX(0); background.SetY(0);
+background.SetWidth(screen_width);
+background.SetHeight(screen_height);
+logo_text = Image.Text("ᚱ  Rune OS 1.0 Iron", 0.486, 0.408, 0.937, 1, "Noto Sans 32");
+logo_sprite = Sprite(logo_text);
+logo_sprite.SetX(screen_width / 2 - logo_text.GetWidth() / 2);
+logo_sprite.SetY(screen_height / 2 - 60);
+progress_bar = Rectangle();
+progress_bar.SetColor(0.486, 0.408, 0.937, 1);
+progress_bar.SetX(screen_width / 2 - 150);
+progress_bar.SetY(screen_height / 2 + 40);
+progress_bar.SetHeight(3);
+progress_bar.SetWidth(0);
+fun BootProgressCallback(duration, progress) {
+    progress_bar.SetWidth(300 * progress);
+}
+Plymouth.SetBootProgressFunction(BootProgressCallback);
+PLYMOUTHEOF
+
+cat > /usr/share/plymouth/themes/rune/rune.plymouth << 'PLYMOUTHEOF'
+[Plymouth Theme]
+Name=Rune OS
+Description=Rune OS Boot Splash
+ModuleName=script
+[script]
+ImageDir=/usr/share/plymouth/themes/rune
+ScriptFile=/usr/share/plymouth/themes/rune/rune.script
+PLYMOUTHEOF
+
+plymouth-set-default-theme rune 2>/dev/null || true
+update-initramfs -u 2>/dev/null || true
+echo "✓ Wallpaper and Plymouth done"
