@@ -67,13 +67,22 @@ jobs:
           path: cache
           key: rune-os-cache-${{ hashFiles('config/package-lists/**') }}
 
-      - name: Rename ISO
+      - name: Find and rename ISO
         run: |
-          sudo mv binary.hybrid.iso rune-os-1.0-arm64.iso 2>/dev/null || \
-          sudo mv live-image-arm64.hybrid.iso rune-os-1.0-arm64.iso 2>/dev/null || \
-          echo "Checking for ISO..."
-          sudo ls -lh *.iso 2>/dev/null
-          df -h
+          echo "==> Listing all files in current directory:"
+          sudo ls -lh
+          echo "==> Searching for any ISO file:"
+          sudo find . -maxdepth 3 -name "*.iso" -type f 2>/dev/null
+          echo "==> Renaming ISO:"
+          ISO=$(sudo find . -maxdepth 3 -name "*.iso" -type f 2>/dev/null | head -1)
+          if [ -n "$ISO" ]; then
+            sudo mv "$ISO" rune-os-1.0-arm64.iso
+            echo "✓ ISO renamed: $ISO → rune-os-1.0-arm64.iso"
+            ls -lh rune-os-1.0-arm64.iso
+          else
+            echo "No ISO found — build may have failed"
+            cat build.log | tail -50
+          fi
 
       - name: Upload ISO
         uses: actions/upload-artifact@v4
