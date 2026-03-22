@@ -20,12 +20,32 @@ jobs:
           sudo rm -rf /usr/local/lib/android
           sudo rm -rf /opt/ghc
           sudo rm -rf /opt/hostedtoolcache
+          sudo apt-get clean
           df -h
 
-      - name: Install live-build
+      - name: Install dependencies
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y live-build
+          sudo apt-get install -y \
+            live-build \
+            qemu-user-static \
+            binfmt-support \
+            debootstrap
+          sudo update-binfmts --enable qemu-aarch64
+
+      - name: Configure live-build for ARM64
+        run: |
+          lb config \
+            --architecture arm64 \
+            --distribution noble \
+            --archive-areas "main universe restricted multiverse" \
+            --debian-installer none \
+            --bootappend-live "boot=live components quiet splash" \
+            --mirror-bootstrap http://ports.ubuntu.com/ubuntu-ports/ \
+            --mirror-chroot http://ports.ubuntu.com/ubuntu-ports/ \
+            --mirror-binary http://ports.ubuntu.com/ubuntu-ports/ \
+            --bootstrap-qemu-arch arm64 \
+            --bootstrap-qemu-static /usr/bin/qemu-aarch64-static
 
       - name: Build Rune OS ISO
         run: |
