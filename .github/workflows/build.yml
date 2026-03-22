@@ -8,7 +8,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-24.04
-    timeout-minutes: 120
+    timeout-minutes: 180
 
     steps:
       - name: Checkout
@@ -20,6 +20,7 @@ jobs:
           sudo rm -rf /usr/local/lib/android
           sudo rm -rf /opt/ghc
           sudo rm -rf /opt/hostedtoolcache
+          sudo docker system prune -af || true
           sudo apt-get clean
           df -h
 
@@ -45,22 +46,29 @@ jobs:
             --mirror-chroot http://ports.ubuntu.com/ubuntu-ports/ \
             --mirror-binary http://ports.ubuntu.com/ubuntu-ports/ \
             --bootstrap-qemu-arch arm64 \
-            --bootstrap-qemu-static /usr/bin/qemu-aarch64-static
+            --bootstrap-qemu-static /usr/bin/qemu-aarch64-static \
+            --updates false \
+            --security false \
+            --apt-options "--yes -o Acquire::Retries=3"
 
       - name: Build Rune OS ISO
         run: |
           sudo lb build 2>&1 | tee build.log
 
-      - name: Check output
+      - name: Find and rename ISO
         run: |
-          ls -lh *.iso 2>/dev/null || echo "No ISO found"
+          find . -name "*.iso" -type f
+          mv binary.hybrid.iso rune-os-1.0-arm64.iso 2>/dev/null || \
+          find . -name "*.iso" -exec mv {} rune-os-1.0-arm64.iso \; 2>/dev/null || \
+          echo "No ISO found"
+          ls -lh *.iso 2>/dev/null
           df -h
 
       - name: Upload ISO
         uses: actions/upload-artifact@v4
         with:
           name: rune-os-1.0-arm64
-          path: "*.iso"
+          path: "rune-os-1.0-arm64.iso"
           retention-days: 7
 
       - name: Upload build log
