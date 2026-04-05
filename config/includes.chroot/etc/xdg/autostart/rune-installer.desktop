@@ -1,5 +1,7 @@
 [Desktop Entry]
-Name=Rune Installer
-Exec=python3 /opt/rune-installer/installer.py
 Type=Application
-X-GNOME-Autostart-enabled=true
+Name=Rune OS Installer
+Exec=python3 /opt/rune-installer/installer.py
+Terminal=false
+X-GNOME-Autostart-Phase=Application
+X-KDE-autostart-after=panel

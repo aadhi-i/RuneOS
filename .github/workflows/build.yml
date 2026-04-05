@@ -69,8 +69,6 @@ jobs:
 
       - name: Find and rename ISO
         run: |
-          echo "==> Listing all files in current directory:"
-          sudo ls -lh
           echo "==> Searching for any ISO file:"
           sudo find . -maxdepth 3 -name "*.iso" -type f 2>/dev/null
           echo "==> Renaming ISO:"
@@ -78,10 +76,9 @@ jobs:
           if [ -n "$ISO" ]; then
             sudo mv "$ISO" rune-os-1.0-arm64.iso
             echo "✓ ISO renamed: $ISO → rune-os-1.0-arm64.iso"
-            ls -lh rune-os-1.0-arm64.iso
           else
             echo "No ISO found — build may have failed"
-            cat build.log | tail -50
+            exit 1
           fi
 
       - name: Upload ISO
