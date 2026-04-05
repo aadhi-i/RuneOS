@@ -1,0 +1,16 @@
+#!/bin/sh
+set -e
+
+echo "==> Enforcing Minimal Rune OS Vector Wallpaper..."
+
+if [ -f /usr/share/backgrounds/rune-wallpaper.svg ]; then
+    # Force KDE Plasma Desktop Wallpaper
+    mkdir -p /usr/share/wallpapers/Next/contents/images/
+    ln -sf /usr/share/backgrounds/rune-wallpaper.svg /usr/share/wallpapers/Next/contents/images/1920x1080.png
+    ln -sf /usr/share/backgrounds/rune-wallpaper.svg /usr/share/wallpapers/Next/contents/images/2560x1440.png
+    ln -sf /usr/share/backgrounds/rune-wallpaper.svg /usr/share/wallpapers/Next/contents/images/3840x2160.png
+    
+    # Force SDDM Login Screen Wallpaper (Breeze theme)
+    mkdir -p /usr/share/sddm/themes/breeze/
+    ln -sf /usr/share/backgrounds/rune-wallpaper.svg /usr/share/sddm/themes/breeze/background.png || true
+fi

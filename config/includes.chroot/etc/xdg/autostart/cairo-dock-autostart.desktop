@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Exec=cairo-dock -o
+Hidden=false
+NoDisplay=false
+Name=Cairo-Dock
+Comment=Rune OS Dock
+X-KDE-autostart-after=panel

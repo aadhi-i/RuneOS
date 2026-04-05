@@ -1,0 +1,21 @@
+#!/bin/bash
+set -e
+echo "==> Setting up Rune OS Theme & Icons..."
+
+# Install git to fetch the icons
+apt-get install -y git
+
+# Install WhiteSur Icons
+git clone https://github.com/vinceliuice/WhiteSur-icon-theme.git /tmp/whitesur-icons
+/tmp/whitesur-icons/install.sh -a -d /usr/share/icons
+rm -rf /tmp/whitesur-icons
+
+# Force Wallpaper globally
+if [ -f /usr/share/backgrounds/rune-wallpaper.svg ]; then
+    mkdir -p /usr/share/wallpapers/Next/contents/images/
+    ln -sf /usr/share/backgrounds/rune-wallpaper.svg /usr/share/wallpapers/Next/contents/images/1920x1080.png
+    ln -sf /usr/share/backgrounds/rune-wallpaper.svg /usr/share/wallpapers/Next/contents/images/2560x1440.png
+    ln -sf /usr/share/backgrounds/rune-wallpaper.svg /usr/share/wallpapers/Next/contents/images/3840x2160.png
+    mkdir -p /usr/share/sddm/themes/breeze/
+    ln -sf /usr/share/backgrounds/rune-wallpaper.svg /usr/share/sddm/themes/breeze/background.png || true
+fi

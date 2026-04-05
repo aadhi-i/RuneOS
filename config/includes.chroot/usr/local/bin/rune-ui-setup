@@ -1,0 +1,45 @@
+#!/bin/bash
+
+# Give Plasma 5 seconds to load before we start ripping it apart
+sleep 5
+
+# Use KDE's internal scripting engine to rebuild the desktop UI
+qdbus org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript "
+    // 1. Delete all existing panels
+    var allPanels = panels();
+    for (var i = 0; i < allPanels.length; i++) {
+        allPanels[i].remove();
+    }
+    
+    // 2. Create the new Top Panel
+    var topPanel = new Panel();
+    topPanel.location = 'top';
+    topPanel.height = 36;
+    
+    // 3. Add the Application Launcher (Start Menu)
+    topPanel.addWidget('org.kde.plasma.kickoff');
+    
+    // 4. Add the Global Application Menu (macOS style top menu)
+    topPanel.addWidget('org.kde.plasma.appmenu');
+    
+    // 5. Add a spacer to push the rest of the items to the right
+    var spacer = topPanel.addWidget('org.kde.plasma.panelspacer');
+    spacer.currentConfigGroup = ['General'];
+    spacer.writeConfig('expanding', true);
+    
+    // 6. Add System Monitors (CPU, Mem, Battery)
+    topPanel.addWidget('org.kde.plasma.systemmonitor.cpucore');
+    topPanel.addWidget('org.kde.plasma.systemmonitor.memory');
+    topPanel.addWidget('org.kde.plasma.battery');
+    
+    // 7. Add System Tray and Clock
+    topPanel.addWidget('org.kde.plasma.systemtray');
+    topPanel.addWidget('org.kde.plasma.digitalclock');
+"
+
+# Force the new icon theme and dark mode
+kwriteconfig5 --file kdeglobals --group Icons --key Theme "WhiteSur-dark"
+kwriteconfig5 --file kdeglobals --group General --key ColorScheme "BreezeDark"
+
+# Remove this script from autostart so it never runs again for this user
+rm -f ~/.config/autostart/rune-ui-setup.desktop

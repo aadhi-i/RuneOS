@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Exec=/usr/local/bin/rune-ui-setup
+Hidden=false
+NoDisplay=false
+Name=Rune OS UI Setup
+X-KDE-autostart-phase=2

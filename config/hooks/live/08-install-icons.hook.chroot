@@ -1,0 +1,13 @@
+#!/bin/bash
+set -e
+echo "==> Downloading and installing WhiteSur icon theme..."
+
+# Ensure git is available for the clone
+apt-get install -y git
+
+# Clone and install the premium icon pack
+git clone https://github.com/vinceliuice/WhiteSur-icon-theme.git /tmp/whitesur-icons
+cd /tmp/whitesur-icons
+./install.sh -a -d /usr/share/icons
+cd /
+rm -rf /tmp/whitesur-icons

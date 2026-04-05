@@ -46,3 +46,4 @@ python3-pip
 python3-gi
 gir1.2-gtk-4.0
 libadwaita-1-0
+plasma-widgets-addons

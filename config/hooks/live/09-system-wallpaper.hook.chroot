@@ -1,0 +1,29 @@
+#!/bin/sh
+set -e
+
+echo "==> Locking Rune OS Wallpaper as System Default..."
+
+# 1. Define the source
+SOURCE_SVG="/usr/share/backgrounds/rune-wallpaper.svg"
+
+# 2. If the wallpaper exists, hijack the default KDE Plasma paths
+if [ -f "$SOURCE_SVG" ]; then
+    # Create the directory structure for the default 'Next' theme
+    TARGET_DIR="/usr/share/wallpapers/Next/contents/images"
+    mkdir -p "$TARGET_DIR"
+
+    # Symlink your SVG to all standard resolution filenames KDE looks for
+    ln -sf "$SOURCE_SVG" "$TARGET_DIR/1920x1080.png"
+    ln -sf "$SOURCE_SVG" "$TARGET_DIR/2560x1440.png"
+    ln -sf "$SOURCE_SVG" "$TARGET_DIR/3840x2160.png"
+    ln -sf "$SOURCE_SVG" "$TARGET_DIR/base.png"
+
+    # 3. Force the SDDM (Login Screen) to use it too
+    SDDM_DIR="/usr/share/sddm/themes/breeze"
+    mkdir -p "$SDDM_DIR"
+    ln -sf "$SOURCE_SVG" "$SDDM_DIR/background.png"
+    
+    # 4. Update the wallpaper metadata to ensure it points to the new symlink
+    # This prevents KDE from trying to find a specific 'Next' image
+    find /usr/share/wallpapers/Next/ -name "metadata.desktop" -exec sed -i 's/DefaultBackground=.*/DefaultBackground=base.png/g' {} +
+fi
