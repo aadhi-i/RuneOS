@@ -20,7 +20,6 @@ jobs:
           sudo rm -rf /usr/local/lib/android
           sudo rm -rf /opt/ghc
           sudo rm -rf /opt/hostedtoolcache
-          sudo docker system prune -af 2>/dev/null || true
           sudo apt-get clean
           df -h
 
@@ -31,17 +30,18 @@ jobs:
             live-build \
             qemu-user-static \
             binfmt-support \
-            debootstrap
+            debootstrap \
+            xorriso \
+            squashfs-tools
           sudo update-binfmts --enable qemu-aarch64
-          echo "✓ Dependencies installed"
+          echo "✓ Dependencies ready"
 
       - name: Restore package cache
         uses: actions/cache@v4
         with:
           path: cache
           key: rune-os-noble-arm64-${{ hashFiles('config/package-lists/**') }}
-          restore-keys: |
-            rune-os-noble-arm64-
+          restore-keys: rune-os-noble-arm64-
 
       - name: Configure live-build
         run: |
@@ -57,12 +57,14 @@ jobs:
             --bootstrap-qemu-arch arm64 \
             --bootstrap-qemu-static /usr/bin/qemu-aarch64-static \
             --apt-options "--yes -o Acquire::Retries=3 -o Acquire::http::Timeout=60"
-          echo "✓ live-build configured"
+          echo "✓ Configured"
 
       - name: Build ISO
         run: |
           sudo lb build 2>&1 | tee build.log
-          echo "==> Build exit code: $?"
+          BUILD_EXIT=${PIPESTATUS[0]}
+          echo "Build exit code: $BUILD_EXIT"
+          exit $BUILD_EXIT
 
       - name: Save package cache
         if: always()
@@ -71,32 +73,28 @@ jobs:
           path: cache
           key: rune-os-noble-arm64-${{ hashFiles('config/package-lists/**') }}
 
-      - name: Locate and rename ISO
+      - name: Find and rename ISO
         run: |
-          echo "==> All files in build dir:"
-          sudo ls -lh *.iso 2>/dev/null || echo "No ISO in root"
-          echo "==> Checking known live-build output names:"
+          echo "==> Searching for ISO..."
           for name in \
             "live-image-arm64.hybrid.iso" \
             "binary.hybrid.iso" \
             "live-image-arm64.iso" \
             "binary.iso"; do
-            if sudo test -f "$name"; then
+            if [ -f "$name" ]; then
               echo "✓ Found: $name"
-              sudo mv "$name" rune-os-1.0-arm64.iso
-              echo "✓ Renamed to rune-os-1.0-arm64.iso"
-              sudo ls -lh rune-os-1.0-arm64.iso
+              mv "$name" rune-os-1.0-arm64.iso
+              ls -lh rune-os-1.0-arm64.iso
               exit 0
             fi
           done
-          echo "==> None of the known names found. Deep search:"
-          sudo find /home/runner/work -maxdepth 4 -name "*.iso" 2>/dev/null
-          sudo find . -maxdepth 3 -name "*.iso" 2>/dev/null
-          echo "==> Last 30 lines of build log:"
-          tail -30 build.log
+          echo "Deep search..."
+          find . -maxdepth 4 -name "*.iso" 2>/dev/null
+          echo "Last 50 lines of build log:"
+          tail -50 build.log
           exit 1
 
-      - name: Upload ISO artifact
+      - name: Upload ISO
         uses: actions/upload-artifact@v4
         with:
           name: rune-os-1.0-arm64
