@@ -1,0 +1,40 @@
+name: Build Rune OS (Master)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Initialize ARM64 Kernel Emulation
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - name: Execute Native ARM64 Build inside Docker
+        run: |
+          docker run --rm --privileged \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace \
+            arm64v8/ubuntu:24.04 \
+            bash -c "
+              export DEBIAN_FRONTEND=noninteractive &&
+              apt-get update &&
+              apt-get install -y live-build debootstrap squashfs-tools xorriso mtools grub-efi-arm64-bin dpkg-dev git curl &&
+              lb clean --purge &&
+              lb config &&
+              lb build
+            "
+
+      - name: Upload Finished ISO
+        uses: actions/upload-artifact@v4
+        with:
+          name: Rune-OS-1.0-Iron-arm64
+          path: "*.iso"
+          if-no-files-found: error
