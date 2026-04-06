@@ -12,10 +12,15 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
       
-      - name: Install Live Build Tools
+      - name: Inject ARM64 Kernel Emulation
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+        
+      - name: Install Build Tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y live-build qemu-user-static
+          sudo apt-get install -y live-build debootstrap qemu-user-static
         
       - name: Execute Live Build
         run: sudo lb build
