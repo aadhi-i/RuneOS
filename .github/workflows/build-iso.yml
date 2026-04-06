@@ -12,18 +12,24 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
       
-      - name: Inject ARM64 Kernel Emulation
+      - name: Set up QEMU for ARM64
         uses: docker/setup-qemu-action@v3
         with:
           platforms: arm64
         
-      - name: Install Build Tools
+      - name: Build ISO in Native ARM64 Container
         run: |
-          sudo apt-get update
-          sudo apt-get install -y live-build debootstrap qemu-user-static
-        
-      - name: Execute Live Build
-        run: sudo lb build
+          docker run --rm --privileged \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace \
+            arm64v8/ubuntu:24.04 \
+            bash -c "
+              export DEBIAN_FRONTEND=noninteractive &&
+              apt-get update && 
+              apt-get install -y live-build debootstrap squashfs-tools xorriso mtools grub-efi-arm64-bin dpkg-dev && 
+              lb clean --purge &&
+              lb build
+            "
         
       - name: Upload ISO Artifact
         uses: actions/upload-artifact@v4
