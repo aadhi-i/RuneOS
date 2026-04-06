@@ -1,2 +1,2 @@
 #!/bin/bash
-lb config noauto --mode ubuntu --distribution noble --architecture arm64 --archive-areas "main restricted universe multiverse" --linux-flavours generic --bootappend-live "boot=casper quiet splash ---" --system live --iso-application "Rune OS" --iso-publisher "Rune OS" --iso-volume "RUNE_OS_1_0" "${@}"
+lb config noauto --mode ubuntu --distribution noble --architecture arm64 --archive-areas "main restricted universe multiverse" --linux-flavours generic --bootappend-live "boot=casper quiet splash ---" --system live --iso-application "Rune OS" --iso-publisher "Rune OS" --iso-volume "RUNE_OS_1_0" --debian-installer false "${@}"
